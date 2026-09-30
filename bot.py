@@ -77,10 +77,27 @@ async def collect(message: Message, bot: Bot):
     await deliver(bot, [message])
 
 
+from aiohttp import web
+
+async def handle_ping(request):
+    return web.Response(text="Bot is alive!")
+
+async def web_server():
+    app = web.Application()
+    app.router.add_get('/', handle_ping)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    # Render автоматически задает переменную PORT, которую мы должны слушать
+    port = int(os.environ.get("PORT", 8080))
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+
 async def main():
     bot = Bot(BOT_TOKEN)
+    # 1. Запускаем фейковый веб-сервер, чтобы Render был доволен
+    await web_server()
+    # 2. Запускаем самого бота
     await dp.start_polling(bot)
-
 
 if __name__ == "__main__":
     asyncio.run(main())
